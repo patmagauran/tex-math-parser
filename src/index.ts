@@ -9,8 +9,10 @@ type Scope = { [key: string]: any };
  * @returns Returns an object containing the root node of a MathJS expression tree
  *          and variables that need to be defined.
  */
-function parseTex(texStr: string) {
-  return parseTokens(tokenizeTex(texStr));
+function parseTex(texStr: string,  implicitMult: boolean = true) {
+  const tokens = tokenizeTex(texStr);
+  console.log(texStr.toString() + ": " +JSON.stringify(tokens));
+  return parseTokens(tokens, implicitMult);
 }
 
 /**

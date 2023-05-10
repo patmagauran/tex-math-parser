@@ -50,6 +50,7 @@ export const enum TokenType {
   Comp,
   Norm,
   Inv,
+  Underscore,
   Space, // ignored by the lexer
 }
 
@@ -69,6 +70,7 @@ export const lexemeToType: { [key: string]: TokenType } = {
   ')': TokenType.Rparen,
   '|': TokenType.Bar,
   '&': TokenType.Amp,
+  '_': TokenType.Underscore,
   bmatrix: TokenType.Matrix,
   '\\\\': TokenType.Dblbackslash,
   '\\sqrt': TokenType.Sqrt,

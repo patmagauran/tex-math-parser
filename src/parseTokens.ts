@@ -14,7 +14,7 @@ function createMathJSNode(token: Token, children: math.MathNode[] = []): math.Ma
     case TokenType.Minus:
       // mathjs differentiates between subtraction and the unary minus
       fn = children.length === 1 ? 'unaryMinus' : fn;
-      // falls through
+    // falls through
     case TokenType.Plus:
     case TokenType.Star:
     case TokenType.Frac:
@@ -55,6 +55,8 @@ function createMathJSNode(token: Token, children: math.MathNode[] = []): math.Ma
     case TokenType.Norm:
     case TokenType.Inv:
       return new (math as any).FunctionNode(fn, children);
+    case TokenType.Underscore:
+      return new (math as any).SymbolNode(children[0] + token.lexeme + "{" + children[1] + "}");
     case TokenType.Equals:
       return new (math as any).AssignmentNode(children[0], children[1]);
     case TokenType.Variable:
@@ -115,12 +117,14 @@ const primaryTypes = [
   TokenType.Begin,
   TokenType.T, // e.g. [[1,2],[3,4]]^T
   TokenType.Opname,
+  TokenType.Underscore
 ];
 
 class Parser {
   tokens: Token[];
 
   pos: number;
+  implicitVariableMult: boolean;
 
   /**
      * A recursive descent parser for TeX math. The following context-free grammar is used:
@@ -163,9 +167,10 @@ class Parser {
      *
      * @param tokens A list of Tokens to be parsed.
      */
-  constructor(tokens: Token[]) {
+  constructor(tokens: Token[], implicitVariableMult: boolean = true) {
     this.tokens = tokens;
     this.pos = 0;
+    this.implicitVariableMult = implicitVariableMult;
   }
 
   /**
@@ -251,7 +256,7 @@ class Parser {
     // one token lookahead and assume that \begin is the start of a matrix.
     // However, if more environnment support is added, it would be necessary to
     // have more lookahead and ensure that the matrix begins with BEGIN LBRACE MATRIX.
-    for (;;) {
+    for (; ;) {
       const lookaheadType = this.match(
         TokenType.Star,
         TokenType.Times,
@@ -267,7 +272,7 @@ class Parser {
       // they are not both numbers
       if (isNumberNode(leftFactor) && lookaheadType === TokenType.Number) {
         throw new ParseError('multiplication is not implicit between two different'
-                    + 'numbers: expected * or \\cdot', this.currentToken());
+          + 'numbers: expected * or \\cdot', this.currentToken());
       } else if (this.match(TokenType.Star, TokenType.Times, TokenType.Slash)) {
         operator = this.nextToken();
         rightFactor = this.nextFactor();
@@ -362,11 +367,13 @@ class Parser {
         [primary] = this.nextGrouping();
         break;
       case TokenType.Number:
-      case TokenType.Variable:
       case TokenType.Pi:
       case TokenType.E:
       case TokenType.T:
         primary = createMathJSNode(this.nextToken());
+        break;
+      case TokenType.Variable:
+        primary = this.nextSubscript();
         break;
       case TokenType.Sqrt:
       case TokenType.Sin:
@@ -396,6 +403,9 @@ class Parser {
         // matrix is the only currently supported environnment: if more are added, another
         // token of lookahead would be required to know which environnment to parse
         primary = this.nextMatrix();
+        break;
+      case TokenType.Underscore:
+        primary = this.nextSubscript();
         break;
       default:
         throw new ParseError('unknown token encountered during parsing', this.nextToken());
@@ -427,7 +437,7 @@ class Parser {
       TokenType.Bar,
       TokenType.Lbrace);
     let grouping = this.nextExpression();
-    
+
     if (leftGrouping.type === TokenType.Bar) {
       // grouping with bars |x| also applies a function, so we create the corresponding function
       // here
@@ -451,6 +461,53 @@ class Parser {
     return children;
   }
 
+  /**
+     * Consume the next token corresponding to a subscript
+     *
+     * @returns The root node of an expression tree.
+     */
+  nextSubscript(): math.MathNode {
+    let base = this.nextVariable();
+    while (this.match(TokenType.Underscore)) {
+      const caret = this.nextToken();
+      let subscript;
+      if (this.match(TokenType.Lbrace)) {
+        const leftGrouping = this.tryConsume("expected '(', '|', '{'",
+        TokenType.Lparen,
+        TokenType.Bar,
+        TokenType.Lbrace);
+        subscript = this.nextVariable(false);
+        this.tryConsumeRightGrouping(leftGrouping);
+      } else {
+        subscript = this.nextVariable();
+      }
+
+      base = createMathJSNode(caret, [base, subscript]);
+    }
+    return base;
+  }
+
+  /**
+   * Consumes a token corresponding to a variable. Will respect user choice of implicit variable multiplication
+   * @returns A variable token
+   */
+  nextVariable(implicit: boolean = this.implicitVariableMult): math.MathNode {
+    let token = this.nextToken();
+    let lexeme = token.lexeme;
+    if (!implicit) {
+
+      while (this.match(TokenType.Variable, TokenType.Number) !== undefined) {
+        lexeme += this.nextToken().lexeme;
+
+      }
+    }
+    token = new Token(lexeme, TokenType.Variable, token.pos);
+
+    return createMathJSNode(token);
+  }
+
+
+  
   /**
      * Consume the next token corresponding to a built-in MathJS function.
      *
@@ -536,13 +593,13 @@ class Parser {
     this.nextToken(); // consume \begin
     this.tryConsume("expected '{' after \\begin", TokenType.Lbrace);
     const matrixToken = this.tryConsume("expected 'matrix' after '\\begin{' "
-                                            + '(no other environnments'
-                                            + 'are supported yet)', TokenType.Matrix);
+      + '(no other environnments'
+      + 'are supported yet)', TokenType.Matrix);
     this.tryConsume("expected '}' after \\begin{matrix", TokenType.Rbrace);
     let row = [];
     const rows = [];
     // parse matrix elements
-    for (;;) {
+    for (; ;) {
       const element = this.nextExpression();
       // '&' delimits columns; append 1 element to this row
       if (this.match(TokenType.Amp)) {
@@ -571,7 +628,7 @@ class Parser {
     }
     this.tryConsume("expected '{' after \\end", TokenType.Lbrace);
     this.tryConsume("expected 'matrix' after '\\end{' (no other environnments"
-                        + 'are supported yet)', TokenType.Matrix);
+      + 'are supported yet)', TokenType.Matrix);
     this.tryConsume("expected '}' after \\end{matrix", TokenType.Rbrace);
     return createMathJSNode(matrixToken, rows);
   }
@@ -592,10 +649,8 @@ class Parser {
       .filter((key) => lexemeToType[key] === rightGroupingType)
       // insert quotes (e.g. { => '{')
       .map((lexeme) => `'${lexeme}'`);
-    const errMsg = `expected ${
-      expectedLexemes.join(' or ')
-    } to match corresponding '${
-      leftGroupingToken.lexeme}'`;
+    const errMsg = `expected ${expectedLexemes.join(' or ')
+      } to match corresponding '${leftGroupingToken.lexeme}'`;
     this.tryConsume(errMsg, rightGrouping[leftGroupingToken.type]!);
   }
 }
@@ -607,6 +662,6 @@ class Parser {
  *
  * @returns The root node of a MathJS expression tree.
  */
-export default function parseTokens(tokens: Token[]): math.MathNode {
-  return (new Parser(tokens)).nextExpression();
+export default function parseTokens(tokens: Token[], implicitVariableMult: boolean = true): math.MathNode {
+  return (new Parser(tokens, implicitVariableMult)).nextExpression();
 }
