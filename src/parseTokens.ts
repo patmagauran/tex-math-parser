@@ -21,6 +21,8 @@ function createMathJSNode(token: Token, children: math.MathNode[] = []): math.Ma
     case TokenType.Frac:
     case TokenType.Slash:
       return new (math as any).OperatorNode(token.lexeme, fn, children);
+    case TokenType.Mod:
+      return new (math as any).OperatorNode('%', fn, children);
     case TokenType.Caret:
       if (children.length < 2) {
         throw new ParseError('Expected two children for ^ operator', token);
@@ -32,7 +34,6 @@ function createMathJSNode(token: Token, children: math.MathNode[] = []): math.Ma
       return new (math as any).OperatorNode(token.lexeme, fn, children);
     // mathjs built-in functions
     case TokenType.Bar:
-    case TokenType.Sqrt:
     case TokenType.Sin:
     case TokenType.Cos:
     case TokenType.Tan:
@@ -62,6 +63,13 @@ function createMathJSNode(token: Token, children: math.MathNode[] = []): math.Ma
         return new (math as any).FunctionNode('log10', [children[0]]);
       }
       return new (math as any).FunctionNode('log', children);
+    }
+    case TokenType.Sqrt:
+    {
+      if (children.length === 1 || children[1] === undefined) {
+        return new (math as any).FunctionNode('sqrt', [children[0]]);
+      }
+      return new (math as any).FunctionNode('nthRoot', children);
     }
     case TokenType.Underscore:
       return new (math as any).SymbolNode(children[0] + token.lexeme + children[1]);
@@ -93,6 +101,7 @@ const rightGrouping: { [key in TokenType]?: TokenType } = {
   [TokenType.Lbrace]: TokenType.Rbrace,
   [TokenType.Left]: TokenType.Right,
   [TokenType.Bar]: TokenType.Bar,
+  [TokenType.LBrack]: TokenType.RBrack,
 };
 
 // Token types that are primaries or denote the start of a primary
@@ -270,6 +279,7 @@ class Parser {
         TokenType.Star,
         TokenType.Times,
         TokenType.Slash,
+        TokenType.Mod,
         ...primaryTypes,
       );
       if (lookaheadType === undefined) {
@@ -282,7 +292,7 @@ class Parser {
       if (isNumberNode(leftFactor) && lookaheadType === TokenType.Number) {
         throw new ParseError('multiplication is not implicit between two different'
           + 'numbers: expected * or \\cdot', this.currentToken());
-      } else if (this.match(TokenType.Star, TokenType.Times, TokenType.Slash)) {
+      } else if (this.match(TokenType.Star, TokenType.Times, TokenType.Slash, TokenType.Mod)) {
         operator = this.nextToken();
         rightFactor = this.nextFactor();
       } else {
@@ -370,6 +380,7 @@ class Parser {
       case TokenType.Lparen:
       case TokenType.Lbrace:
       case TokenType.Bar:
+      case TokenType.LBrack:
         // nextGrouping can return an array of children
         // (if the grouping contains comma-seperated values, e.g. for a multi-value function),
         // so for a primary, we only take the first value (or if there is just one, the only value)
@@ -385,6 +396,8 @@ class Parser {
         primary = this.nextSubscript();
         break;
       case TokenType.Sqrt:
+        primary = this.nextSqrtFunction();
+        break;
       case TokenType.Sin:
       case TokenType.Cos:
       case TokenType.Tan:
@@ -443,10 +456,11 @@ class Parser {
       leftRight = true;
       this.nextToken(); // consume \left
     }
-    const leftGrouping = this.tryConsume("expected '(', '|', '{'",
+    const leftGrouping = this.tryConsume("expected '(', '|', '{', '['",
       TokenType.Lparen,
       TokenType.Bar,
-      TokenType.Lbrace);
+      TokenType.Lbrace,
+      TokenType.LBrack);
     let grouping = this.nextExpression();
 
     if (leftGrouping.type === TokenType.Bar) {
@@ -476,6 +490,7 @@ class Parser {
     const logarithm = this.nextToken();
     let subscript;
     if (this.match(TokenType.Underscore)) {
+      this.nextToken();
       if (this.match(TokenType.Lbrace)) {
         const leftGrouping = this.tryConsume("expected '(', '|', '{'",
           TokenType.Lparen,
@@ -497,6 +512,27 @@ class Parser {
       args = [argument, subscript];
     }
     return createMathJSNode(logarithm, args);
+  }
+
+  nextSqrtFunction() : math.MathNode {
+    const squareRoot = this.nextToken();
+    let root;
+    if (this.match(TokenType.LBrack)) {
+      const leftGrouping = this.tryConsume("expected '['",
+        TokenType.LBrack);
+
+      // subscript = this.tryConsume("Expected a number as base of log", TokenType.Number);
+      root = this.nextFactor();
+      this.tryConsumeRightGrouping(leftGrouping);
+    }
+    const [argument] = this.nextArgument();
+    let args;
+    if (root === undefined) {
+      args = [argument];
+    } else {
+      args = [argument, root];
+    }
+    return createMathJSNode(squareRoot, args);
   }
 
   /**
@@ -534,7 +570,7 @@ class Parser {
     let token = this.nextToken();
     let { lexeme } = token;
     if (!implicit) {
-      while (this.match(TokenType.Variable, TokenType.Number) !== undefined) {
+      while (this.match(TokenType.Variable, TokenType.Number, TokenType.E) !== undefined) {
         lexeme += this.nextToken().lexeme;
       }
     }

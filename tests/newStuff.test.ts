@@ -13,16 +13,19 @@ function debuggableLog(texStr: string, implicit: boolean = true) {
 if (process.env.NODE_ENV != 'test') {
 }
 test('Parse log base 4', () => {
-  console.log(debuggableLog('abf', false));
-  console.log(debuggableLog('\\log(x)', false));
-  console.log(debuggableLog('\\ln(x)', false));
-  console.log(debuggableLog('abf', false));
-  console.log(debuggableLog('a^b', false));
-  console.log(debuggableLog('abf_{a2}', false));
-  console.log(debuggableLog('abf_{a2}^2', false));
-  console.log(debuggableLog('abf_{a2}^2'));
-  console.log(debuggableLog('abf_a'));
-  console.log(debuggableLog('\\log_3(5)'));
+  console.log(debuggableLog('\\sqrt[5]{b}'))
+  console.log(debuggableLog('\\sqrt{b}'))
+  // console.log(debuggableLog('abf', false));
+  // console.log(debuggableLog('\\log(x)', false));
+  // console.log(debuggableLog('\\ln(x)', false));
+  // console.log(debuggableLog('abf', false));
+  // console.log(debuggableLog('a^b', false));
+  // console.log(debuggableLog('abf_{a2}', false));
+  // console.log(debuggableLog('abf_{a2}^2', false));
+  // console.log(debuggableLog('abf_{a2}^2'));
+  // console.log(debuggableLog('abf_a'));
+  // console.log(debuggableLog('\\log_3(5)'));
+  // console.log(debuggableLog('a \\mod y'));
   // NOTE: this should not work, absolute value requires \left and \right
   // expect(evaluate('| -6 |')).toStrictEqual(6);
 });
