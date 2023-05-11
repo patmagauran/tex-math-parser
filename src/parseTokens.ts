@@ -43,9 +43,21 @@ function createMathJSNode(token: Token, children: math.MathNode[] = []): math.Ma
     case TokenType.Sinh:
     case TokenType.Cosh:
     case TokenType.Tanh:
+    case TokenType.Coth:
+    case TokenType.Csch:
+    case TokenType.Sech:
     case TokenType.Arcsin:
     case TokenType.Arccos:
     case TokenType.Arctan:
+    case TokenType.Arccot:
+    case TokenType.Arcsinh:
+    case TokenType.Arccosh:
+    case TokenType.Arctanh:
+    case TokenType.Arccoth:
+    case TokenType.Arccsc:
+    case TokenType.Arcsec:
+    case TokenType.Arccsch:
+    case TokenType.Arcsech:
     case TokenType.Eigenvalues:
     case TokenType.Eigenvectors:
     case TokenType.Det:
@@ -123,9 +135,21 @@ const primaryTypes = [
   TokenType.Arcsin,
   TokenType.Arccos,
   TokenType.Arctan,
+  TokenType.Arccot,
+  TokenType.Arcsinh,
+  TokenType.Arccosh,
+  TokenType.Arctanh,
+  TokenType.Arccoth,
+  TokenType.Arccsc,
+  TokenType.Arcsec,
+  TokenType.Arccsch,
+  TokenType.Arcsech,
   TokenType.Sinh,
   TokenType.Cosh,
   TokenType.Tanh,
+  TokenType.Coth,
+  TokenType.Csch,
+  TokenType.Sech,
   TokenType.Log,
   TokenType.Ln,
   TokenType.Det,
@@ -407,9 +431,21 @@ class Parser {
       case TokenType.Arcsin:
       case TokenType.Arccos:
       case TokenType.Arctan:
+      case TokenType.Arccot:
+      case TokenType.Arcsinh:
+      case TokenType.Arccosh:
+      case TokenType.Arctanh:
+      case TokenType.Arccoth:
+      case TokenType.Arccsc:
+      case TokenType.Arcsec:
+      case TokenType.Arccsch:
+      case TokenType.Arcsech:
       case TokenType.Sinh:
       case TokenType.Cosh:
       case TokenType.Tanh:
+      case TokenType.Coth:
+      case TokenType.Csch:
+      case TokenType.Sech:
       case TokenType.Ln:
       case TokenType.Det:
         primary = this.nextUnaryFunc();
