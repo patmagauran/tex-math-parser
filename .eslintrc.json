@@ -24,7 +24,9 @@
         "@typescript-eslint/no-redeclare": "error",
         "no-unused-vars": "off",
         "@typescript-eslint/no-unused-vars": "warn",
-        "no-plusplus": "off"
+        "no-plusplus": "off",
+        "max-len": "off",
+        "@typescript-eslint/max-len": "off"
     }, 
     "overrides": [
         {

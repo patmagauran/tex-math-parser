@@ -45,7 +45,6 @@ function createMathJSNode(token: Token, children: math.MathNode[] = []): math.Ma
     case TokenType.Arcsin:
     case TokenType.Arccos:
     case TokenType.Arctan:
-
     case TokenType.Eigenvalues:
     case TokenType.Eigenvectors:
     case TokenType.Det:
@@ -56,17 +55,16 @@ function createMathJSNode(token: Token, children: math.MathNode[] = []): math.Ma
     case TokenType.Inv:
     case TokenType.Ln:
       return new (math as any).FunctionNode(fn, children);
-    
-    case TokenType.Log:
-     {
-      if (children.length == 1 || children[1] == undefined) {
-        return new (math as any).FunctionNode("log10", [children[0]]);
-      }
-      return new (math as any).FunctionNode("log", children);
 
+    case TokenType.Log:
+    {
+      if (children.length === 1 || children[1] === undefined) {
+        return new (math as any).FunctionNode('log10', [children[0]]);
+      }
+      return new (math as any).FunctionNode('log', children);
     }
     case TokenType.Underscore:
-      return new (math as any).SymbolNode(children[0] + token.lexeme  + children[1]);
+      return new (math as any).SymbolNode(children[0] + token.lexeme + children[1]);
     case TokenType.Equals:
       return new (math as any).AssignmentNode(children[0], children[1]);
     case TokenType.Variable:
@@ -127,13 +125,14 @@ const primaryTypes = [
   TokenType.Begin,
   TokenType.T, // e.g. [[1,2],[3,4]]^T
   TokenType.Opname,
-  TokenType.Underscore
+  TokenType.Underscore,
 ];
 
 class Parser {
   tokens: Token[];
 
   pos: number;
+
   implicitVariableMult: boolean;
 
   /**
@@ -398,7 +397,6 @@ class Parser {
       case TokenType.Sinh:
       case TokenType.Cosh:
       case TokenType.Tanh:
-     // case TokenType.Log:
       case TokenType.Ln:
       case TokenType.Det:
         primary = this.nextUnaryFunc();
@@ -475,28 +473,30 @@ class Parser {
   }
 
   nextLogFunction() : math.MathNode {
-    let logarithm = this.nextToken();
+    const logarithm = this.nextToken();
     let subscript;
     if (this.match(TokenType.Underscore)) {
-      const underscore = this.nextToken();
       if (this.match(TokenType.Lbrace)) {
         const leftGrouping = this.tryConsume("expected '(', '|', '{'",
-        TokenType.Lparen,
-        TokenType.Bar,
-        TokenType.Lbrace);
-        //subscript = this.tryConsume("Expected a number as base of log", TokenType.Number);
+          TokenType.Lparen,
+          TokenType.Bar,
+          TokenType.Lbrace);
+        // subscript = this.tryConsume("Expected a number as base of log", TokenType.Number);
         subscript = this.nextPower();
         this.tryConsumeRightGrouping(leftGrouping);
       } else {
-        //subscript = this.tryConsume("Expected a number as base of log", TokenType.Number);
+        // subscript = this.tryConsume("Expected a number as base of log", TokenType.Number);
         subscript = this.nextPower();
       }
-    } else {
     }
-    let [argument] = this.nextArgument()
-
-    return createMathJSNode(logarithm, [argument, subscript]);
-
+    const [argument] = this.nextArgument();
+    let args;
+    if (subscript === undefined) {
+      args = [argument];
+    } else {
+      args = [argument, subscript];
+    }
+    return createMathJSNode(logarithm, args);
   }
 
   /**
@@ -511,9 +511,9 @@ class Parser {
       let subscript;
       if (this.match(TokenType.Lbrace)) {
         const leftGrouping = this.tryConsume("expected '(', '|', '{'",
-        TokenType.Lparen,
-        TokenType.Bar,
-        TokenType.Lbrace);
+          TokenType.Lparen,
+          TokenType.Bar,
+          TokenType.Lbrace);
         subscript = this.nextVariable(false);
         this.tryConsumeRightGrouping(leftGrouping);
       } else {
@@ -526,17 +526,16 @@ class Parser {
   }
 
   /**
-   * Consumes a token corresponding to a variable. Will respect user choice of implicit variable multiplication
+   * Consumes a token corresponding to a variable.
+   * Will respect user choice of implicit variable multiplication
    * @returns A variable token
    */
   nextVariable(implicit: boolean = this.implicitVariableMult): math.MathNode {
     let token = this.nextToken();
-    let lexeme = token.lexeme;
+    let { lexeme } = token;
     if (!implicit) {
-
       while (this.match(TokenType.Variable, TokenType.Number) !== undefined) {
         lexeme += this.nextToken().lexeme;
-
       }
     }
     token = new Token(lexeme, TokenType.Variable, token.pos);
@@ -544,8 +543,6 @@ class Parser {
     return createMathJSNode(token);
   }
 
-
-  
   /**
      * Consume the next token corresponding to a built-in MathJS function.
      *
@@ -688,7 +685,7 @@ class Parser {
       // insert quotes (e.g. { => '{')
       .map((lexeme) => `'${lexeme}'`);
     const errMsg = `expected ${expectedLexemes.join(' or ')
-      } to match corresponding '${leftGroupingToken.lexeme}'`;
+    } to match corresponding '${leftGroupingToken.lexeme}'`;
     this.tryConsume(errMsg, rightGrouping[leftGroupingToken.type]!);
   }
 }

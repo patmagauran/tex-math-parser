@@ -9,6 +9,9 @@ function debuggableLog(texStr: string, implicit: boolean = true) {
   console.log(texStr.toString() + ": " + JSON.stringify(parsed));
   return parsed;
 }
+
+if (process.env.NODE_ENV != 'test') {
+}
 test('Parse log base 4', () => {
   console.log(debuggableLog('abf', false));
   console.log(debuggableLog('\\log(x)', false));
