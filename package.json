@@ -12,7 +12,8 @@
     "postinstall": "patch-package",
     "lint": "npx eslint",
     "test": "npx jest",
-    "build": "tsc --build --sourceMap true"
+    "build": "tsc --build --sourceMap true",
+    "buildProd": "tsc --build"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
