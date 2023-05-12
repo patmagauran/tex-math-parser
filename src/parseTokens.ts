@@ -89,6 +89,8 @@ function createMathJSNode(token: Token, children: math.MathNode[] = []): math.Ma
       return new (math as any).AssignmentNode(children[0], children[1]);
     case TokenType.Variable:
       return new (math as any).SymbolNode(token.lexeme);
+    case TokenType.Greek:
+      return new (math as any).SymbolNode(token.lexeme.replace('\\', ''));
     case TokenType.Number: {
       // convert string lexeme to number if posssible
       const constant = Number.isNaN(Number(token.lexeme)) ? token.lexeme : +token.lexeme;
@@ -159,6 +161,7 @@ const primaryTypes = [
   TokenType.T, // e.g. [[1,2],[3,4]]^T
   TokenType.Opname,
   TokenType.Underscore,
+  TokenType.Greek,
 ];
 
 class Parser {
@@ -414,6 +417,9 @@ class Parser {
       case TokenType.Pi:
       case TokenType.E:
       case TokenType.T:
+        primary = createMathJSNode(this.nextToken());
+        break;
+      case TokenType.Greek:
         primary = createMathJSNode(this.nextToken());
         break;
       case TokenType.Variable:
