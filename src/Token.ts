@@ -90,6 +90,7 @@ export const lexemeToType: { [key: string]: TokenType } = {
   '|': TokenType.Bar,
   '&': TokenType.Amp,
   '_': TokenType.Underscore,
+  '\\%': TokenType.Mod,
   bmatrix: TokenType.Matrix,
   '\\\\': TokenType.Dblbackslash,
   '\\sqrt': TokenType.Sqrt,

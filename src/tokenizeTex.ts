@@ -92,6 +92,9 @@ export default function tokenizeTex(texStr: string) {
         // space character: ignore
         type = TokenType.Space;
         lexeme = '\\ ';
+      } else if (nextChar === '%') {
+        type = TokenType.Mod;
+        lexeme = '\\%';
       } else {
         // TeX command
         const command = scanWord(texStr, i + 1);
