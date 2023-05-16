@@ -1,6 +1,6 @@
 import tokenizeTex from './tokenizeTex';
 import parseTokens from './parseTokens';
-
+import mathjs from './customMath';
 // scope used by evaluateTex to resolve identifiers
 type Scope = { [key: string]: any };
 
@@ -15,17 +15,18 @@ function parseTex(texStr: string, implicitMult: boolean = true) {
   return parseTokens(tokens, implicitMult);
 }
 
-/**
- * Evaluate a TeX math string, returning the result as a MathJS MathType.
- */
-function evaluateTex(texStr: string, scope?: Scope) {
-  const root = parseTex(texStr);
-  const evaluated = root.evaluate(scope);
-  return { evaluated, scope };
-}
+// /**
+//  * Evaluate a TeX math string, returning the result as a MathJS MathType.
+//  */
+// function evaluateTex(texStr: string, scope?: Scope) {
+//   const root = parseTex(texStr);
+//   const evaluated = root.evaluate(scope);
+//   return { evaluated, scope };
+// }
 
 export {
   parseTex,
-  evaluateTex,
+  mathjs as customMath,
+  // evaluateTex,
   Scope,
 };

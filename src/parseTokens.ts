@@ -1,4 +1,4 @@
-import { MathNode } from 'mathjs';
+// import { MathNode } from 'mathjs';
 import math from './customMath';
 import ParseError from './ParseError';
 import Token, { TokenType, typeToOperation, lexemeToType } from './Token';

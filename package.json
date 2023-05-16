@@ -11,8 +11,10 @@
     "start": "npx patch-package && tsc --watch",
     "lint": "npx eslint",
     "test": "npx jest",
-    "build": "tsc --build --sourceMap true",
-    "buildProd": "tsc --build"
+    "clean": "rm -rf ./dist",
+    "build": "yarn clean && tsc --build --sourceMap true ./tsconfig-mjs.json",
+    "build:test": "yarn clean && tsc --build --sourceMap true ./tsconfig-cjs.json",
+    "buildProd": "yarn clean && tsc --build ./tsconfig-mjs.json"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -46,7 +48,6 @@
     "eslint-plugin-import": "^2.23.4",
     "jest": "^29.5.0",
     "mathjs": "^9.4.4",
-    "matrix-eig": "^1.0.0",
     "patch-package": "^6.4.7",
     "ts-jest": "^29.1.0",
     "typescript": "^5.0.4"
