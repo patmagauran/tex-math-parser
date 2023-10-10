@@ -295,7 +295,7 @@ class Parser {
     function isNumberNode(node: math.MathNode) {
       return node.isConstantNode && !Number.isNaN(Number(node));
     }
-    let leftFactor = this.nextFactor();
+    let leftFactor = this. nextFactor();
     let implicitMult = false;
     // since bmatrix is the only environnment supported, it suffices to only have
     // one token lookahead and assume that \begin is the start of a matrix.
@@ -416,12 +416,14 @@ class Parser {
       case TokenType.Number:
       case TokenType.Pi:
       case TokenType.E:
+      // case TokenType.T:
+      //   primary = createMathJSNode(this.nextToken());
+      //   break;
+      // case TokenType.Greek:
+      //   primary = createMathJSNode(this.nextToken());
+      //   break;
       case TokenType.T:
-        primary = createMathJSNode(this.nextToken());
-        break;
       case TokenType.Greek:
-        primary = createMathJSNode(this.nextToken());
-        break;
       case TokenType.Variable:
         primary = this.nextSubscript();
         break;
@@ -579,7 +581,7 @@ class Parser {
 
   /**
      * Consume the next token corresponding to a subscript
-     *
+     * TODO: Expand to support the greeks
      * @returns The root node of an expression tree.
      */
   nextSubscript(): math.MathNode {
@@ -612,12 +614,12 @@ class Parser {
     let token = this.nextToken();
     let { lexeme } = token;
     if (!implicit) {
-      while (this.match(TokenType.Variable, TokenType.Number, TokenType.E) !== undefined) {
+      while (this.match(TokenType.Variable, TokenType.Number, TokenType.E, TokenType.Greek, TokenType.T) !== undefined) {
         lexeme += this.nextToken().lexeme;
       }
     }
-    token = new Token(lexeme, TokenType.Variable, token.pos);
-
+    token = new Token(lexeme.replace('\\', ''), TokenType.Variable, token.pos);
+    
     return createMathJSNode(token);
   }
 
